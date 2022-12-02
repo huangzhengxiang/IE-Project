@@ -21,6 +21,11 @@ pip install pillow==9.3.0
 First, download GloVe pre-trained word-embedding from , unzip it in the current directory.
 Then, build vocabulary.
 ~~~
+cd data 
+mkdir CCF # md CCF (windows)
+cd CCF
+mkdir json # md json (windows)
+cd ../../
 python build_data.py --pkl 0 --json 1
 ~~~
 
