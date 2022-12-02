@@ -1,4 +1,5 @@
 ### 0. Environment
+First, create a new environment.
 ~~~
 # create environment
 conda create -n nlp python==3.7.2
@@ -19,7 +20,7 @@ pip install pillow==9.3.0
 ~~~
 ### 1. Set up
 First, download GloVe pre-trained word-embedding from , unzip it in the current directory.
-Then, build vocabulary.
+Then, build data (CCF).
 ~~~
 cd data 
 mkdir CCF # md CCF (windows)
@@ -28,7 +29,7 @@ mkdir json # md json (windows)
 cd ../../
 python build_data.py --pkl 0 --json 1
 ~~~
-
+Next, train our model.
 ~~~
 # train on ccf training set
 python train.py --dataset ccf --model simple
@@ -37,7 +38,7 @@ python train.py --dataset ccf --model bert
 python train.py --dataset imdb --model simple
 python train.py --dataset imdb --model bert
 ~~~
-
+Finally, we can evaluate the results.
 ~~~
 # evaluate on ccf dataset or imdb dataset
 # intradomain testing
