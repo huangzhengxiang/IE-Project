@@ -11,7 +11,7 @@ pip install typing-extensions==4.1.1
 # update wheel
 e.g {C:\Users\Dell\.conda\envs\nlp\python.exe} -m pip install -U pip setuptools wheel
 # install other dependencies
-pip install -U spacy
+pip install -U spacy==3.4.2
 python -m spacy download zh_core_web_sm
 python -m spacy download en_core_web_sm
 pip install transformers==4.21.0
