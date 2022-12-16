@@ -6,6 +6,7 @@ conda activate nlp
 # install pytorch
 conda install pytorch==1.10.2 torchvision==0.11.3 torchaudio==0.10.2 cudatoolkit=11.3 -c pytorch -c pytorch-lts
 pip install pandas
+pip install lxml
 pip install torchtext==0.11.2
 pip install typing-extensions==4.1.1
 # update wheel
