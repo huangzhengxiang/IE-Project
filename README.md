@@ -11,7 +11,7 @@ pip install typing-extensions==4.1.1
 # update wheel
 e.g {C:\Users\Dell\.conda\envs\nlp\python.exe} -m pip install -U pip setuptools wheel
 # install other dependencies (spacy==3.4.2)
-pip install -U spacy
+pip install -U spacy==3.4.2
 python -m spacy download zh_core_web_sm
 python -m spacy download en_core_web_sm
 pip install transformers==4.21.0
@@ -20,6 +20,14 @@ pip install pillow==9.3.0
 ### 1. Set up
 First, download GloVe pre-trained word-embedding from , unzip it in the current directory.
 Then, build vocabulary.
+~~~
+cd data 
+mkdir CCF # md CCF (windows)
+cd CCF
+mkdir json # md json (windows)
+cd ../../
+python build_data.py --pkl 0 --json 1
+~~~
 ~~~
 <!-- python build_data.py --pkl 0 --json 1 -->
 python preprocess.py
