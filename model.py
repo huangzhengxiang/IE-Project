@@ -28,6 +28,7 @@ class SelfAttention(nn.Module):
         x = torch.sum(x,1,False)
         # x: [B,H]
         return x
+    
 
 class simpleNet(nn.Module):
     def __init__(self,embed_dim,h_dim,out_dim):

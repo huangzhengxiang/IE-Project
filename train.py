@@ -1,4 +1,3 @@
-import os
 import torch
 from tqdm import tqdm
 from torchtext.legacy import data
@@ -18,7 +17,7 @@ split_ratio=0.8
 split_sent=False
 hidden_dim = 64
 out_dim = 1
-batch_size = 64
+batch_size = 128
 lr = 1e-3
 weight_decay = 0.0
 nepoch = 10
@@ -40,11 +39,13 @@ if __name__== "__main__":
     parser=argparse.ArgumentParser()
     parser.add_argument("--dataset",type=str)
     parser.add_argument("--model",type=str)
+    parser.add_argument("--lang",type=str)
     args=parser.parse_args()
     dataset=args.dataset
     model_name=args.model
+    language=args.lang
     print("Start training on {} dataset".format(dataset))
-    ckpt_dir="./ckpt/{}_{}_best.pth".format(dataset,model_name)
+    ckpt_dir="./ckpt/{}_{}_{}_best.pth".format(dataset,model_name,language)
     # 1. deterministic seed
     SEED = 3428
     torch.manual_seed(SEED)
@@ -52,6 +53,7 @@ if __name__== "__main__":
     # 2. data and vocabulary
     if model_name=="simple":
         TEXT, LABEL, train_data, valid_data, test_data = build_data(dataset=dataset,
+                    lang=language,
                     json_dir="./data/CCF/json/",
                     vocab_size=vocab_size,
                     vector_size=vector_size,
@@ -59,6 +61,7 @@ if __name__== "__main__":
                     SEED=SEED)
     elif model_name=="bert":
         TEXT, LABEL, train_data, valid_data, test_data = build_data_bert(dataset=dataset,
+            lang=language,
             json_dir="./data/CCF/json/",
             split_ratio=split_ratio,
             SEED=SEED)
@@ -87,7 +90,10 @@ if __name__== "__main__":
         embed.embed.weight.data[unk_idx] = torch.zeros(embed_dim).to(device)
         embed.embed.weight.data[pad_idx] = torch.zeros(embed_dim).to(device)
     elif model_name=="bert":
-        embed = BertModel.from_pretrained('bert-base-uncased')
+        if language=="en":
+            embed = BertModel.from_pretrained('bert-base-uncased')
+        else:
+            embed = BertModel.from_pretrained("hfl/chinese-roberta-wwm-ext-large")	
         embed_dim = embed.config.to_dict()['hidden_size']
     # 5. build network
     model = simpleNet(embed_dim, hidden_dim, out_dim)

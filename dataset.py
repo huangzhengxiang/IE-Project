@@ -1,4 +1,3 @@
-import os
 import torch
 from tqdm import tqdm
 from torchtext.legacy import data
@@ -18,11 +17,15 @@ class Tokenizer():
         return tokens
 
 def build_data(dataset="ccf",
+               lang="en",
                json_dir="./data/CCF/json/",
                vocab_size=int(1e5),
                vector_size=200,
                split_ratio=0.8,
                SEED=None):  
+    if lang!="en":
+        print("Language Not Supported Error!")
+        exit(-1)        
     # 1. deterministic seed
     TEXT = data.Field(tokenize = 'spacy',
                   tokenizer_language = 'en_core_web_sm'
@@ -34,7 +37,7 @@ def build_data(dataset="ccf",
         fields = {'label': ('label', LABEL), 'sent': ('text', TEXT)}
         train_data = data.TabularDataset.splits(
                                 path = json_dir,
-                                train = 'data_ori.json',
+                                train = 'endata.json',
                                 format = 'json',
                                 fields = fields
         )
@@ -55,15 +58,26 @@ def build_data(dataset="ccf",
     return TEXT, LABEL, train_data, valid_data, test_data
 
 def build_data_bert(dataset="ccf",
-               json_dir="./data/CCF/json/",
-               split_ratio=0.8,
-               SEED=None):
-    tokenizer = BertTokenizer.from_pretrained('bert-base-uncased')
+                lang="en",
+                json_dir="./data/CCF/json/",
+                split_ratio=0.8,
+                SEED=None):
+    if lang=="en":
+        tokenizer = BertTokenizer.from_pretrained('bert-base-uncased')
+        max_input_length = tokenizer.max_model_input_sizes['bert-base-uncased']
+    elif lang=="cn":
+        if dataset!="ccf":
+            print("Dataset Not Supported Error!")
+            exit(-1)
+        tokenizer = BertTokenizer.from_pretrained("hfl/chinese-roberta-wwm-ext-large")
+        max_input_length = 512
+    else:
+        print("Language Not Supported Error!")
+        exit(-1)
     init_token_idx = tokenizer.cls_token_id
     eos_token_idx = tokenizer.sep_token_id
     pad_token_idx = tokenizer.pad_token_id
     unk_token_idx = tokenizer.unk_token_id
-    max_input_length = tokenizer.max_model_input_sizes['bert-base-uncased']
     forBert=Tokenizer(tokenizer,max_input_length)
     TEXT = data.Field(use_vocab = False,
                   tokenize = forBert.tokenize_and_cut,
@@ -79,7 +93,7 @@ def build_data_bert(dataset="ccf",
         fields = {'label': ('label', LABEL), 'sent': ('text', TEXT)}
         train_data = data.TabularDataset.splits(
                                 path = json_dir,
-                                train = 'data_ori.json',
+                                train = lang+'data.json',
                                 format = 'json',
                                 fields = fields
         )

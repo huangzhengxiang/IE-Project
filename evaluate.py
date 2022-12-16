@@ -1,4 +1,3 @@
-import os
 import torch
 from tqdm import tqdm
 from torchtext.legacy import data
@@ -15,7 +14,7 @@ vocab_size=int(1e5)
 vector_size=200
 split_ratio=0.8
 split_sent=False
-batch_size=64
+batch_size=128
 
 def count_parameters(model):
     return sum(p.numel() for p in model.parameters() if p.requires_grad)
@@ -25,10 +24,12 @@ if __name__== "__main__":
     parser.add_argument("--dataset",type=str)
     parser.add_argument("--model",type=str)
     parser.add_argument("--ckpt",type=str)
+    parser.add_argument("--lang",type=str)
     args=parser.parse_args()
     dataset=args.dataset
     model_name=args.model
     ckpt_dir=args.ckpt
+    language=args.lang
     print("Start testing on {} dataset".format(dataset))
     # 1. deterministic seed
     SEED = 3428
@@ -37,6 +38,7 @@ if __name__== "__main__":
     # 2. data and vocabulary
     if model_name=="simple":
         TEXT, LABEL, train_data, valid_data, test_data = build_data(dataset=dataset,
+                    lang=language,
                     json_dir="./data/CCF/json/",
                     vocab_size=vocab_size,
                     vector_size=vector_size,
@@ -44,6 +46,7 @@ if __name__== "__main__":
                     SEED=SEED)
     elif model_name=="bert":
         TEXT, LABEL, train_data, valid_data, test_data = build_data_bert(dataset=dataset,
+            lang=language,
             json_dir="./data/CCF/json/",
             split_ratio=split_ratio,
             SEED=SEED)
@@ -72,7 +75,10 @@ if __name__== "__main__":
         embed.embed.weight.data[unk_idx] = torch.zeros(embed_dim).to(device)
         embed.embed.weight.data[pad_idx] = torch.zeros(embed_dim).to(device)
     elif model_name=="bert":
-        embed = BertModel.from_pretrained('bert-base-uncased')
+        if language=="en":
+            embed = BertModel.from_pretrained('bert-base-uncased')
+        else:
+            embed = BertModel.from_pretrained("hfl/chinese-roberta-wwm-ext-large")
         embed_dim = embed.config.to_dict()['hidden_size']
     embed.to(device)
     # 5. Start testing
