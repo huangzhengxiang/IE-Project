@@ -8,19 +8,22 @@ import argparse
 from dataset import build_data, build_data_bert
 from utils.eval import evaluate
 from transformers import BertTokenizer, BertModel
+import random
 
+tuning = False
+tune_prob = 0.5
 
 json_dir="./data/CCF/json/"
 vocab_size = int(1e5)
 vector_size = 200
-split_ratio=0.8
+split_ratio=0.9
 split_sent=False
 hidden_dim = 64
 out_dim = 1
-batch_size = 128
-lr = 1e-3
+batch_size = 32
+lr = 5e-4
 weight_decay = 0.0
-nepoch = 10
+nepoch = 5
 
 def count_parameters(model):
     return sum(p.numel() for p in model.parameters() if p.requires_grad)
@@ -47,7 +50,7 @@ if __name__== "__main__":
     print("Start training on {} dataset".format(dataset))
     ckpt_dir="./ckpt/{}_{}_{}_best.pth".format(dataset,model_name,language)
     # 1. deterministic seed
-    SEED = 3428
+    SEED = 1924
     torch.manual_seed(SEED)
     torch.backends.cudnn.deterministic = True
     # 2. data and vocabulary
@@ -93,7 +96,7 @@ if __name__== "__main__":
         if language=="en":
             embed = BertModel.from_pretrained('bert-base-uncased')
         else:
-            embed = BertModel.from_pretrained("hfl/chinese-roberta-wwm-ext-large")	
+            embed = BertModel.from_pretrained("./ckpt/roberta/chinese-roberta-wwm-ext-large")	
         embed_dim = embed.config.to_dict()['hidden_size']
     # 5. build network
     model = simpleNet(embed_dim, hidden_dim, out_dim)
@@ -113,11 +116,18 @@ if __name__== "__main__":
         for point in tqdm(train_iterator):
         # for point in train_iterator:
             optimizer.zero_grad()
-            with torch.no_grad():
+            if tuning and (random.random()>tune_prob):
+                # fine tune with 50%
                 if model_name=="simple":
                     x = embed(point.text.transpose(1,0))
                 elif model_name=="bert":
                     x = embed(point.text.transpose(1,0))[0]
+            else:
+                with torch.no_grad():
+                    if model_name=="simple":
+                        x = embed(point.text.transpose(1,0))
+                    elif model_name=="bert":
+                        x = embed(point.text.transpose(1,0))[0]
             pred = model(x).reshape(-1)
             loss = criterion(pred,point.label)
             loss.backward()
@@ -139,6 +149,7 @@ if __name__== "__main__":
         if (v_loss < best_loss):
             best_loss = v_loss
             save_model(model, embed_dim, hidden_dim, out_dim, ckpt_dir)
+            embed.save_pretrained("./ckpt/roberta_tuned/chinese-roberta-wwm-ext-large")
         print("epoch: {0}, train loss: {1:.4f}, val loss: {2:.4f}".format(i+1,t_loss.item(),v_loss.item()))
 
     # 7. evaluation

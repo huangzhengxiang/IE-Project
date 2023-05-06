@@ -63,13 +63,13 @@ def build_data_bert(dataset="ccf",
                 split_ratio=0.8,
                 SEED=None):
     if lang=="en":
-        tokenizer = BertTokenizer.from_pretrained('bert-base-uncased')
-        max_input_length = tokenizer.max_model_input_sizes['bert-base-uncased']
+        tokenizer = BertTokenizer.from_pretrained("./ckpt/bert/bert-large-uncased")
+        max_input_length = tokenizer.max_model_input_sizes['bert-large-uncased']
     elif lang=="cn":
         if dataset!="ccf":
             print("Dataset Not Supported Error!")
             exit(-1)
-        tokenizer = BertTokenizer.from_pretrained("hfl/chinese-roberta-wwm-ext-large")
+        tokenizer = BertTokenizer.from_pretrained("./ckpt/roberta/chinese-roberta-wwm-ext-large")
         max_input_length = 512
     else:
         print("Language Not Supported Error!")

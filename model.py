@@ -42,6 +42,7 @@ class simpleNet(nn.Module):
         )
         self.self_attention= SelfAttention(h_dim=h_dim)
         self.fc = nn.Linear(h_dim*2,out_dim)
+        self.fc2 = nn.Linear(embed_dim,out_dim)
         
     def forward(self,x):
         # [B,S,E]

@@ -2,7 +2,7 @@ import torch
 from model import simpleNet
 from tqdm import tqdm
 
-def evaluate(embed, model_name, test_iterator, ckpt_dir ,valid_iterator=None):
+def evaluate(embed, model_name, test_iterator, ckpt_dir,valid_iterator=None, tuning = False):
     """_summary_
 
     Args:
@@ -19,7 +19,10 @@ def evaluate(embed, model_name, test_iterator, ckpt_dir ,valid_iterator=None):
     embed_dim = ckpt['embed_dim']
     h_dim = ckpt['h_dim']
     out_dim = ckpt['out_dim']
-    model = simpleNet(embed_dim,h_dim,out_dim)
+    if tuning and model_name=="fc":
+        model = torch.nn.Linear(embed_dim, out_dim)
+    else:
+        model = simpleNet(embed_dim, h_dim, out_dim)
     model.load_state_dict(ckpt['model'])
     model.cuda()
     model.eval()
@@ -31,8 +34,10 @@ def evaluate(embed, model_name, test_iterator, ckpt_dir ,valid_iterator=None):
             for point in tqdm(valid_iterator):
                 if model_name=="simple":
                     x = embed(point.text.transpose(1,0))
+                elif tuning and model_name=="fc":
+                    x = embed(point.text.transpose(1,0)).last_hidden_state[:,0]
                 elif model_name=="bert":
-                    x = embed(point.text.transpose(1,0))[0]
+                    x = embed(point.text.transpose(1,0)).last_hidden_state
                 pred = torch.round(torch.sigmoid(model(x).reshape(-1)))
                 TP_val.append((pred==point.label).sum().float().item())
                 val_size.append(pred.shape[0])
@@ -43,8 +48,10 @@ def evaluate(embed, model_name, test_iterator, ckpt_dir ,valid_iterator=None):
         for point in tqdm(test_iterator):
             if model_name=="simple":
                 x = embed(point.text.transpose(1,0))
+            elif tuning and model_name=="fc":
+                x = embed(point.text.transpose(1,0)).last_hidden_state[:,0]
             elif model_name=="bert":
-                x = embed(point.text.transpose(1,0))[0]
+                x = embed(point.text.transpose(1,0)).last_hidden_state
             pred = torch.round(torch.sigmoid(model(x).reshape(-1)))
             TP_test.append((pred==point.label).sum().float().item())
             test_size.append(pred.shape[0])

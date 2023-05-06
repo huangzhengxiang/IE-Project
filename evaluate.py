@@ -12,6 +12,7 @@ from transformers import BertTokenizer, BertModel
 json_dir="./data/CCF/json/"
 vocab_size=int(1e5)
 vector_size=200
+# dataset split ratio
 split_ratio=0.8
 split_sent=False
 batch_size=128
@@ -25,14 +26,16 @@ if __name__== "__main__":
     parser.add_argument("--model",type=str)
     parser.add_argument("--ckpt",type=str)
     parser.add_argument("--lang",type=str)
+    parser.add_argument("--tuning",type=int,default=0)
     args=parser.parse_args()
     dataset=args.dataset
     model_name=args.model
     ckpt_dir=args.ckpt
     language=args.lang
+    tuning=bool(args.tuning)
     print("Start testing on {} dataset".format(dataset))
     # 1. deterministic seed
-    SEED = 3428
+    SEED = 1924
     torch.manual_seed(SEED)
     torch.backends.cudnn.deterministic = True
     # 2. data and vocabulary
@@ -44,7 +47,7 @@ if __name__== "__main__":
                     vector_size=vector_size,
                     split_ratio=split_ratio,
                     SEED=SEED)
-    elif model_name=="bert":
+    elif tuning or model_name=="bert":
         TEXT, LABEL, train_data, valid_data, test_data = build_data_bert(dataset=dataset,
             lang=language,
             json_dir="./data/CCF/json/",
@@ -74,18 +77,18 @@ if __name__== "__main__":
         embed.embed.weight.data.copy_(TEXT.vocab.vectors)
         embed.embed.weight.data[unk_idx] = torch.zeros(embed_dim).to(device)
         embed.embed.weight.data[pad_idx] = torch.zeros(embed_dim).to(device)
-    elif model_name=="bert":
+    elif tuning or model_name=="bert":
         if language=="en":
-            embed = BertModel.from_pretrained('bert-base-uncased')
+            embed = BertModel.from_pretrained("./ckpt/bert_tuned/bert-large-uncased")
         else:
-            embed = BertModel.from_pretrained("hfl/chinese-roberta-wwm-ext-large")
+            embed = BertModel.from_pretrained("./ckpt/roberta_tuned/chinese-roberta-wwm-ext-large")	
         embed_dim = embed.config.to_dict()['hidden_size']
     embed.to(device)
     # 5. Start testing
-    train_acc, _ = evaluate(embed, model_name, train_iterator, ckpt_dir)
+    train_acc, _ = evaluate(embed, model_name, train_iterator, ckpt_dir, tuning=tuning)
     print("train accuracy: {0:.2f}%".format(train_acc*100))        
-    val_acc, _ = evaluate(embed, model_name, valid_iterator, ckpt_dir)
+    val_acc, _ = evaluate(embed, model_name, valid_iterator, ckpt_dir, tuning=tuning)
     print("validation accuracy: {0:.2f}%".format(val_acc*100))
     if dataset != "ccf":
-        test_acc, _ = evaluate(embed, model_name, test_iterator, ckpt_dir)
+        test_acc, _ = evaluate(embed, model_name, test_iterator, ckpt_dir, tuning=tuning)
         print("test accuracy: {0:.2f}%".format(test_acc*100))
