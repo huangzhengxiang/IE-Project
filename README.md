@@ -1,5 +1,6 @@
 ## IE-Project
 Rong Shan, shanrong@sjtu.edu.cn
+
 Zhengxiang Huang, huangzhengxiang@sjtu.edu.cn
 
 This is a class project implementation of emotion classification for Chinese and English texts.
